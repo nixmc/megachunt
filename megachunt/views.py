@@ -30,5 +30,7 @@ def index():
     user_hash = utils.md5hash(user_email)
     logout_url = users.create_logout_url("/")
     
+    logging.info('Visited by user %s', repr((user_email, user_nickname)))
+    
     return render_template('index.html', 
         user=user, user_nickname=user_nickname, user_email=user_email, user_hash=user_hash, logout_url=logout_url)
