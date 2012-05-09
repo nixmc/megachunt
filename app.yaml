@@ -3,9 +3,14 @@ version: 1
 runtime: python
 api_version: 1
 
+
 handlers:
 - url: /static
   static_dir: static
+
+- url: /_ah/mail/.+ 
+  script: handle_incoming_email.py 
+  login: admin
 
 - url: .*
   script: main.py
@@ -14,3 +19,6 @@ handlers:
 builtins:
 - remote_api: on
 - datastore_admin: on
+
+inbound_services:
+- mail
