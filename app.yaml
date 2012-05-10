@@ -1,7 +1,8 @@
 application: megachunt
 version: 1
-runtime: python
+runtime: python27
 api_version: 1
+threadsafe: true
 
 
 handlers:
@@ -9,11 +10,11 @@ handlers:
   static_dir: static
 
 - url: /_ah/mail/.+ 
-  script: handle_incoming_email.py 
+  script: megachunt.emailapp 
   login: admin
 
 - url: .*
-  script: main.py
+  script: megachunt.webapp
   login: required
 
 builtins:

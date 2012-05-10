@@ -20,5 +20,5 @@ class IncomingMailHandler(InboundMailHandler):
         # TODO...
     
 
-application = webapp.WSGIApplication([IncomingMailHandler.mapping()], debug=True)
-run_wsgi_app(application)
+app = webapp.WSGIApplication([IncomingMailHandler.mapping()], debug=True)
+# run_wsgi_app(application)
