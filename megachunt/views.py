@@ -17,6 +17,8 @@ try:
 except ImportError:
     import simplejson as json
 
+import urllib3
+
 # Application imports
 from flaskapp import app
 import settings
@@ -34,3 +36,28 @@ def index():
     
     return render_template('index.html', 
         user=user, user_nickname=user_nickname, user_email=user_email, user_hash=user_hash, logout_url=logout_url)
+
+@app.route('/api/1/lookup/<user>')
+def lookup(user):
+    """
+    Lookup details about the specified user.
+    """
+    try:
+        user = settings.USERS[user]
+        access_token = user["access_token"]
+        instance_url = user["instance_url"]
+    except:
+        abort(404)
+    
+    http = urllib3.PoolManager()
+    resource = "%s/services/data/v24.0/chatter/users/me/" % instance_url
+    headers = {
+        "Authorization": "OAuth %s" % access_token
+    }
+    r = http.request("GET", resource, headers=headers)
+    
+    # Return JSON response
+    response = make_response(r.data)
+    response.headers["Content-Type"] = "application/json"
+    
+    return response
