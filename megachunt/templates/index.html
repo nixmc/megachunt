@@ -2,5 +2,10 @@
 
 {% block content %}
 <p>Welcome, {{user_nickname}}!</p>
+
+{% if handle %}
+<p>Your handle: {{ handle }}</p>
+{% else %}
 <p><a href="/authenticate">Connect with Chatter</a>.</p>
+{% endif %}
 {% endblock %}
