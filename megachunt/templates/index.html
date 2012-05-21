@@ -5,6 +5,7 @@
 
 {% if handle %}
 <p>Your handle: {{ handle }}</p>
+<p>Emails sent to <a href="mailto:{{ handle }}@megachunt.appspotmail.com">{{ handle }}@megachunt.appspotmail.com</a> will automatically update your Chatter status, so keep it a secret!</p>
 {% else %}
 <p><a href="/authenticate">Connect with Chatter</a>.</p>
 {% endif %}
