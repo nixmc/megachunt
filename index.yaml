@@ -1,0 +1,10 @@
+indexes:
+  - kind: Word
+    properties:
+    - name: tag
+    - name: rand
+  - kind: EmailHandle
+    ancestor: yes
+    properties:
+    - name: created_at
+      direction: desc

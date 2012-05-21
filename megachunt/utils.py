@@ -1,8 +1,23 @@
+#!/usr/bin/env python
+
 import md5
+import sys
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from urllib import quote
 
-import settings
+import urllib3
+
+try:
+    import settings
+except ImportError:
+    if __name__ == "__main__":
+        sys.path.append("..")
+        import settings
 
 def md5hash(s):
     """
@@ -25,3 +40,48 @@ def chatter_authorize_url(login_instance="na1.salesforce.com"):
         quote(settings.CHATTER_CONSUMER_KEY),
         quote(settings.CHATTER_CALLBACK_URL),
     )
+
+def get_access_token(code):
+    """
+    The client application server must extract the authorization code and pass
+    it in a request to Salesforce for an access token. This request should be 
+    made as a POST against this URL: 
+    https://login.instance_name/services/oauth2/token with the following query 
+    parameters:
+    
+        grant_type:     Value must be authorization_code for this flow.
+        client_id:      Consumer key from the remote access application definition.
+        client_secret:  Consumer secret from the remote access application definition.
+        redirect_uri:   URI to redirect the user to after approval. This must match the value in the Callback URL field in the remote access application definition exactly, and is the same value sent by the initial redirect.
+        code:           Authorization code obtained from the callback after approval.
+        format:         Expected return format. This parameter is optional. The default is json. Values are:
+        
+            * urlencoded
+            * json
+            * xml
+    
+    e.g.
+    
+        $ curl -i --form grant_type=authorization_code \
+            --form client_id=<client_id> \
+            --form client_secret=<client_secret> \
+            --form redirect_uri=https://megachunt.appspot.com/authenticate/_callback \
+            --form code=<code> \
+            --form format=json \
+             https://na1.salesforce.com/services/oauth2/token
+    """
+    http = urllib3.PoolManager()
+    resource = "https://na1.salesforce.com/services/oauth2/token"
+    fields = dict(grant_type="authorization_code", client_id=settings.CHATTER_CONSUMER_KEY,
+                  client_secret=settings.CHATTER_CONSUMER_SECRET, 
+                  redirect_uri=settings.CHATTER_CALLBACK_URL, code=code, 
+                  format="json")
+    r = http.request("POST", resource, fields=fields)
+    
+    return r.status, json.loads(r.data)
+
+def refresh_access_token(refresh_token):
+    pass
+
+if __name__ == "__main__":
+    print get_access_token(sys.argv[1])

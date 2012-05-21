@@ -32,6 +32,9 @@ print User.get_by_key_name.__doc__
 pprint.pprint(dir(User))
 """
 
+import logging
+import random
+
 from google.appengine.api import users
 from google.appengine.ext import db
 
@@ -71,8 +74,93 @@ class User(db.Expando):
         return unicode(self).encode('utf-8')
     
 
+class CommonWordMethods():
+    @classmethod
+    def get_random_word(cls):
+        word = cls.gql("""WHERE rand > :rand 
+                          ORDER BY rand 
+                          LIMIT 1""", 
+                          rand=random.random()).get()
+        
+        logging.info("Returning random word, '%s'", (word))
+        return word    
+
+class Adjective(db.Model, CommonWordMethods):
+    word = db.StringProperty(required=True)
+    slug = db.StringProperty(required=True)
+    length = db.IntegerProperty(required=True, indexed=True)
+    rand = db.FloatProperty(required=True, indexed=True)    
+    
+    def __unicode__(self):
+        return self.word
+    
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+    
+
+class Noun(db.Model, CommonWordMethods):
+    word = db.StringProperty(required=True)
+    slug = db.StringProperty(required=True)
+    length = db.IntegerProperty(required=True, indexed=True)
+    rand = db.FloatProperty(required=True, indexed=True)
+    
+    def __unicode__(self):
+        return self.word
+    
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+    
+
+class EmailHandle(db.Model):
+    """
+    Unique email handle identifying a user.
+    """
+    
+    handle = db.StringProperty(required=True, indexed=True)
+    created_at = db.DateTimeProperty(auto_now_add=True)
+    updated_at = db.DateTimeProperty(auto_now=True)
+    
+    @classmethod
+    def create_handle_for_user(cls, user):
+        hdl = cls.generate_unique_handle()
+        row = cls(parent=user, key_name=hdl, handle=hdl)
+        row.put()
+        
+        return hdl
+    
+    @classmethod
+    def generate_unique_handle(cls):
+        while True:
+            adjective = Adjective.get_random_word()
+            noun = Noun.get_random_word()
+            
+            hdl = "-".join((str(adjective), str(noun), str(random.randint(100, 999))))
+            
+            if cls.all().filter("handle", hdl).get() != None:
+                # Handle is not unique, try again...
+                continue
+                
+            return hdl
+    
+    @classmethod
+    def get_handle_for_user(cls, user):
+        hdl = cls.all().ancestor(user).order("-created_at").get()
+        
+        return hdl.handle if hdl else None
+    
+    @classmethod
+    def get_user_from_handle(cls, hdl):
+        hdl = cls.all().filter("handle", hdl).get()
+        # hdl = cls.get_by_key_name(hdl)
+        
+        return hdl.parent() if hdl else None
+    
+
 class Chunt(db.Expando):
-    user = db.UserProperty(required=True, indexed=True)
+    # Don't have user as a property, instead have the user as the parent
+    # E.g. chunt = Chunt(parent=user, ...)
+    # See: https://developers.google.com/appengine/docs/python/datastore/entities#Ancestor_Paths
+    # user = db.UserProperty(required=True, indexed=True)
     content = db.TextProperty(required=True)
     created_At = db.DateTimeProperty(auto_now_add=True)
     updated_at = db.DateTimeProperty(auto_now=True)

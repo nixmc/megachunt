@@ -21,6 +21,7 @@ import urllib3
 
 # Application imports
 from flaskapp import app
+from decorators import *
 from models import *
 import settings
 import utils
@@ -33,11 +34,13 @@ def index():
     user_hash = user.md5hash()
     logout_url = User.create_logout_url("/")
     
+    handle = EmailHandle.get_handle_for_user(user)
+    
     logging.info('Visited by user %s', repr((user_email, user_nickname)))
     
     return render_template('index.html', 
         user=user, user_nickname=user_nickname, user_email=user_email, 
-        user_hash=user_hash, logout_url=logout_url)
+        user_hash=user_hash, logout_url=logout_url, handle=handle)
 
 @app.route('/authenticate')
 def authenticate():
@@ -56,7 +59,7 @@ def authenticate():
 def authenticate_callback():
     """
     Once Salesforce has confirmed that the client application is authorized, 
-    the end-user’s web browser is redirected to the callback URL specified by 
+    the end-user's web browser is redirected to the callback URL specified by 
     the redirect_uri parameter, appended with the following values in its 
     query string:
     
@@ -80,11 +83,46 @@ def authenticate_callback():
             * json
             * xml
     """
-    response = make_response(request.args.get("code"))
+    # Ensure we have an authorization code
+    code = request.args.get("code", None)
+    if not code:
+        abort(400)
+    
+    # Lookup the access code
+    status, access = utils.get_access_token(code)
+    
+    if not (status == 200 and "error" not in access):
+        # Error
+        abort(500)
+    
+    # Save the details
+    user = User.get_current_user()
+    user.access_token = access.get("access_token", "")
+    user.refresh_token = access.get("refresh_token", "")
+    user.instance_url = access.get("instance_url", "")
+    user.save()
+    
+    # Create email handle
+    handle = EmailHandle.create_handle_for_user(user)
+    
+    # Redirect
+    return redirect("/?handle_created")
+
+@app.route('/api/1/random/phrase')
+def random_phrase():
+    """
+    Generates a random phrase from a random adjective and noun.
+    """
+    adjective = Adjective.get_random_word()
+    noun = Noun.get_random_word()
+    phrase = "-".join((str(adjective), str(noun)))
+    
+    response = make_response("%s\n" % phrase)
     response.headers["Content-Type"] = "text/plain"
     
     return response
 
+@cached
 @app.route('/api/1/lookup/<user>')
 def lookup(user="me"):
     """
@@ -108,5 +146,25 @@ def lookup(user="me"):
     # Return JSON response
     response = make_response(r.data)
     response.headers["Content-Type"] = "application/json"
+    
+    return response
+
+@app.route('/api/1/user/from/<handle>')
+def user_from_handle(handle):
+    user = EmailHandle.get_user_from_handle(handle)
+    
+    response = make_response("User: %s\n" % str(user))
+    response.headers["Content-Type"] = "text/plain"
+    
+    return response
+
+@app.route('/api/1/test')
+def test():
+    user = User.get_current_user()
+    
+    handle = EmailHandle.get_handle_for_user(user)
+    
+    response = make_response("Handle: %s\n" % str(handle))
+    response.headers["Content-Type"] = "text/plain"
     
     return response
