@@ -67,6 +67,13 @@ class User(db.Expando):
     def md5hash(self):
         return utils.md5hash(self.email())
     
+    def update_access_token(self, access_token):
+        logging.info("Updating access token for %s to %s", (str(self), access_token))
+        
+        self.access_token = access_token
+
+        return self.put()
+
     def __unicode__(self):
         return self.email()
     
