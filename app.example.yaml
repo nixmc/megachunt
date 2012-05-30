@@ -10,6 +10,9 @@ handlers:
 - url: /_ah/mail/.+ 
   script: megachunt.emailapp 
   login: admin
+- url: /_ah/xmpp/message/chat/ 
+  script: megachunt.xmppapp 
+  login: admin
 - url: .*
   script: megachunt.webapp
   login: required
