@@ -38,4 +38,6 @@ class IncomingMailHandler(InboundMailHandler):
         feed_items = getattr(chatter.feeds.news.me, "feed-items")
         feed_items(_method="POST", text=chunt)
 
+        # TODO: Save the Chunt
+
 app = webapp.WSGIApplication([IncomingMailHandler.mapping()], debug=True)
