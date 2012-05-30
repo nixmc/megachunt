@@ -31,6 +31,9 @@ class ChatterCall(object):
         self.refresh_token = unicode(refresh_token)
         self.access_token_refreshed_callback = access_token_refreshed_callback
 
+    def __getitem__(self, k):
+        return self.__getattr__(k)
+    
     def __getattr__(self, k):
         try:
             return object.__getattr__(self, k)
