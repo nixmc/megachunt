@@ -83,7 +83,8 @@ class CommonWordMethods():
                           rand=random.random()).get()
         
         logging.info("Returning random word, '%s'", (word))
-        return word    
+        return word
+    
 
 class Adjective(db.Model, CommonWordMethods):
     word = db.StringProperty(required=True)

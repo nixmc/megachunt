@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import md5
+import hashlib
 import sys
 
 try:
@@ -23,7 +23,7 @@ def md5hash(s):
     """
     Generates an MD5 hash from s
     """
-    hash = md5.md5(s)
+    hash = hashlib.md5(s)
     return hash.hexdigest()
 
 def chatter_authorize_url(login_instance="na1.salesforce.com"):
@@ -81,7 +81,39 @@ def get_access_token(code):
     return r.status, json.loads(r.data)
 
 def refresh_access_token(refresh_token):
-    pass
+    """
+    If the client application has a refresh token, it can use it to send a request for a new access token. 
+    
+    To ask for a new access token, the client application should send a POST request to https://login.instance_name/services/oauth2/token with the following query parameters:
+    
+        grant_type:     Value must be refresh_token for this flow.
+        refresh_token:  The refresh token the client application already received. 
+        client_id:      Consumer key from the remote access application definition.
+        client_secret:  Consumer secret from the remote access application definition.
+        format:         Expected return format. This parameter is optional. The default is json. Values are:
+    
+            * urlencoded
+            * json
+            * xml
+    
+    e.g.
+    
+        $ curl -i --form grant_type=refresh_token \
+            --form refresh_token=<refresh_token> \
+            --form client_id=<client_id> \
+            --form client_secret=<client_secret> \
+            --form format=json \
+            https://na1.salesforce.com/services/oauth2/token
+    """
+    http = urllib3.PoolManager()
+    resource = "https://na1.salesforce.com/services/oauth2/token"
+    fields = dict(grant_type="refresh_token", refresh_token=refresh_token,
+                  client_id=settings.CHATTER_CONSUMER_KEY,
+                  client_secret=settings.CHATTER_CONSUMER_SECRET, 
+                  format="json")
+    r = http.request("POST", resource, fields=fields)
+    
+    return r.status, json.loads(r.data)
 
 if __name__ == "__main__":
     print get_access_token(sys.argv[1])
