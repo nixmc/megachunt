@@ -33,7 +33,7 @@ class ChatterCall(object):
 
     def __getitem__(self, k):
         return self.__getattr__(k)
-    
+
     def __getattr__(self, k):
         try:
             return object.__getattr__(self, k)
@@ -41,7 +41,7 @@ class ChatterCall(object):
             def extend_call(arg):
                 return self.callable_cls(
                     auth=self.auth, instance_url=self.instance_url, access_token=self.access_token, 
-                    callable_cls=self.callable_cls, uriparts=self.uriparts + (arg,),
+                    callable_cls=self.callable_cls, uriparts=self.uriparts + (arg.replace("_","-"),),
                     refresh_token=self.refresh_token, 
                     access_token_refreshed_callback=self.access_token_refreshed_callback)
             if k == "_":
