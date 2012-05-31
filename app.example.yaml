@@ -22,3 +22,7 @@ builtins:
 
 inbound_services:
 - mail
+
+libraries:
+- name: django
+  version: "1.3"

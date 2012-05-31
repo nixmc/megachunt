@@ -4,7 +4,6 @@ import logging, email
 
 from google.appengine.ext import webapp 
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler 
-from google.appengine.ext.webapp.util import run_wsgi_app
 
 from chatter import Chatter, ChatterAuth
 
@@ -35,8 +34,7 @@ class IncomingMailHandler(InboundMailHandler):
         chatter = Chatter(auth=auth, instance_url=user.instance_url, access_token=user.access_token, 
                           refresh_token=user.refresh_token, 
                           access_token_refreshed_callback=user.update_access_token)
-        feed_items = getattr(chatter.feeds.news.me, "feed-items")
-        feed_items(_method="POST", text=chunt)
+        chatter.feeds.news.me.feed_items.post(text=chunt)
 
         # TODO: Save the Chunt
 
