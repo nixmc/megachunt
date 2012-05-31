@@ -25,9 +25,9 @@ class IncomingXMPPHandler(webapp.RequestHandler):
             return message.reply(
                 """<html xmlns='http://jabber.org/protocol/xhtml-im'>
                     <body xmlns='http://www.w3.org/1999/xhtml'>
-                    <p>Sorry, I don't know who you are... Please try <a href='https://megachunt.appspot.com/authenticate'>authenticating</a> first.</p> 
+                    <p>Sorry, I don't know who you are... Please try <a href='%s'>authenticating</a> first.</p> 
                     </body>
-                   </html>""", raw_xml=True)
+                   </html>""" % settings.CHATTER_AUTHENTICATE_URL, raw_xml=True)
 
         logging.info("Chunting from %s: %s" % (user.email(), chunt))
 
