@@ -13,8 +13,6 @@ from urllib import quote
 
 import urllib3
 
-from chatter_globals import POST_ACTIONS     
-
 class ChatterAuth(object):
     def __init__(self, client_id, client_secret):
         self.client_id = client_id
@@ -22,7 +20,8 @@ class ChatterAuth(object):
 
 
 class ChatterCall(object):
-    def __init__(self, auth, instance_url, access_token, callable_cls, uriparts, refresh_token=None, access_token_refreshed_callback=None):
+    def __init__(self, auth, instance_url, access_token, callable_cls, 
+                 uriparts, refresh_token=None, access_token_refreshed_callback=None):
         self.auth = auth
         self.instance_url = unicode(instance_url)
         self.access_token = unicode(access_token)
@@ -49,6 +48,14 @@ class ChatterCall(object):
             else:
                 return extend_call(k)
 
+    def get(self, **kwargs):
+        kwargs["_method"] = "GET"
+        return self(**kwargs)
+
+    def post(self, **kwargs):
+        kwargs["_method"] = "POST"
+        return self(**kwargs)
+
     def __call__(self, **kwargs):
         # Build the uri.
         uriparts = []
@@ -56,23 +63,18 @@ class ChatterCall(object):
             # If this part matches a keyword argument, use the
             # supplied value otherwise, just use the part.
             uriparts.append(str(kwargs.pop(uripart, uripart)))
-        uri = '/'.join(uriparts)
+        uri = "/".join(uriparts)
 
-        method = kwargs.pop('_method', None)
-        if not method:
-            method = "GET"
-            for action in POST_ACTIONS:
-                if re.search("%s(/\d+)?$" % action, uri):
-                    method = "POST"
-                    break
+        # Default method is 'GET'
+        method = kwargs.pop("_method", "GET")
 
         # If an id kwarg is present and there is no id to fill in in
         # the list of uriparts, assume the id goes at the end.
-        id = kwargs.pop('id', None)
+        id = kwargs.pop("id", None)
         if id:
-            uri += "/%s" %(id)
+            uri += "/%s" % (id)
 
-        resource = self.instance_url.rstrip('/') + '/' + uri
+        resource = self.instance_url.rstrip("/") + "/" + uri
 
         return self._handle_response(method, resource, fields=kwargs)
 
@@ -106,11 +108,12 @@ class ChatterCall(object):
         fields = dict(grant_type="refresh_token", refresh_token=self.refresh_token,
                       client_id=self.auth.client_id, client_secret=self.auth.client_secret,
                       format="json")
-        status, data = self._handle_response("POST", resource, fields=fields, refresh_access_token=False)
+        status, data = self._handle_response("POST", resource, fields=fields, 
+                                             refresh_access_token=False)
         
-        if 'access_token' in data:
+        if "access_token" in data:
             # Update access token
-            self.access_token = data['access_token']
+            self.access_token = data["access_token"]
             
             # Notify others via callback
             if callable(self.access_token_refreshed_callback):
@@ -122,7 +125,8 @@ class ChatterCall(object):
         # Return False, indicating access_token not refreshed
         return False
 
-    def _handle_response(self, method, resource, fields, headers=None, refresh_access_token=True, max_retries=2):
+    def _handle_response(self, method, resource, fields, headers=None, refresh_access_token=True, 
+                         max_retries=2):
         http = urllib3.PoolManager()
         
         headers = headers or dict()
@@ -140,8 +144,10 @@ class ChatterCall(object):
             # Does the access token need to be refreshed? I.e. is the session ID invalid?
             invalid_session_id = len([
                 item for item in data 
-                    if 'errorCode' in item and item['errorCode'] == 'INVALID_SESSION_ID']) > 0
+                    if "errorCode" in item and item["errorCode"] == "INVALID_SESSION_ID"]) > 0
             
+            # Refresh the access token if we have an invalid session and have not yet
+            # reached the max_retries limit
             if invalid_session_id and refresh_access_token and retries < max_retries:
                 self._refresh_access_token()
 
@@ -150,6 +156,64 @@ class ChatterCall(object):
         return r.status, data
 
 class Chatter(ChatterCall):
+    """
+    The minimalist yet fully featured Chatter API class.
+
+    Heavily inspired by https://github.com/sixohsix/twitter.
+
+    For an overview of the Chatter API visit: 
+    http://www.salesforce.com/us/developer/docs/chatterapi/Content/quickstart.htm
+
+    Examples:
+
+            # Instantiation
+            client_id = "YOUR_CHATTER_CLIENT_ID"
+            client_secret = "YOUR_CHATTER_CLIENT_SECRET"
+            auth = chatter.ChatterAuth(client_id, client_secret)
+
+            instance_url = "YOUR_USER_INSTANCE_URL"
+            access_token = "YOUR_USER_ACCESS_TOKEN"
+            refresh_token = "YOUR_USER_REFRESH_TOKEN"
+
+            chatter = chatter.Chatter(auth=auth, instance_url=instance_url, 
+                                      access_token=access_token, refresh_token=refresh_token)
+            
+            # Get authenticated user's details
+            me = chatter.users.me.get()
+
+            # Note 'GET' is implied, so you can reduce the above to:
+            me = chatter.users.me()
+
+            # Get another user's details
+            other_user = chatter.users["005E0000000FpoxIAC"].get()
+
+            # Again, this can be reduced:
+            other_user = chatter.users["005E0000000FpoxIAC"]()
+
+            # Another way to achieve this, using the '_' magic method:
+            other_user = chatter.users._("005E0000000FpoxIAC").get()
+
+            # Updating the authenticated user's Chatter status:
+            chatter.feeds.news.me.feed_items.post(text="Hello world!")
+
+            # Occassionally it is necessary to refresh the user's access token, due to
+            # session expiration. The underlying ChatterCall class will handle this
+            # automatically, however you may wish to be notified of access token changes
+            # so you can reflect this in your user model.
+            # 
+            # It's possible to do this via the access_token_refreshed_callback, pass in 
+            # a callable, and your callback will get called with the refreshed access token.
+            # 
+            # e.g.
+            def my_callback(access_token):
+                print "New access_token", access_token
+            chatter = chatter.Chatter(auth=auth, instance_url=instance_url, 
+                                      access_token=access_token, refresh_token=refresh_token,
+                                      access_token_refreshed_callback=my_callback)
+
+
+            # The rest is hopefully self-explanatory! :)
+    """
     def __init__(self, auth, instance_url, access_token, refresh_token=None, 
                  version="v24.0", access_token_refreshed_callback=None):
 
