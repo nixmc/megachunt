@@ -16,8 +16,10 @@ class IncomingXMPPHandler(webapp.RequestHandler):
         message = xmpp.Message(self.request.POST)
         
         # TODO: handle @-mentions in message.body
-        # e.g. @[Steve Winton] becomes @{005E0000000Fpox} (I think!)
-        
+        # e.g. @[Steve Winton] becomes {@005E0000000Fpox} (I think!)
+        # text: {@005E0000000Fpox}
+        # text: howdy, {@005E0000000Fpox}
+
         chunt = strip_tags(message.body)
 
         sender = message.sender.split("/")

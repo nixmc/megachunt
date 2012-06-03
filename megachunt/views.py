@@ -10,6 +10,7 @@ cache = GAEMemcachedCache()
 # App Engine imports
 from google.appengine.api import memcache
 # from google.appengine.api.urlfetch import fetch
+from google.appengine.api import users
 
 # Other non-standard lib imports
 try:
@@ -32,7 +33,7 @@ def index():
     user_nickname = user.nickname()
     user_email = user.email()
     user_hash = user.md5hash()
-    logout_url = User.create_logout_url("/")
+    logout_url = users.create_logout_url("/")
     
     handle = EmailHandle.get_handle_for_user(user)
     

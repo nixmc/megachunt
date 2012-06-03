@@ -1,13 +1,40 @@
 {% extends "base.html" %}
 
 {% block content %}
-<p>Welcome, {{user_nickname}}!</p>
+<div class="hero-unit">
+    <h1>Oh, hello there! :)</h1>
+    
+    {% if handle %}
 
-{% if handle %}
-<p>Your handle: {{ handle }}</p>
-<p>Emails sent to <a href="mailto:{{ handle }}@megachunt.appspotmail.com">{{ handle }}@megachunt.appspotmail.com</a> will automatically update your Chatter status, so keep it a secret!</p>
-{% else %}
-<p><a href="/authenticate">Connect with Chatter</a>.</p>
-{% endif %}
-<p><a href="{{ logout_url }}">Logout</a>.</p>
+    <p>You're all set!</p>
+    
+    {% else %}
+    
+    <p>Let's get started shall we?</p>
+    
+    {% endif %}
+</div>
+
+<section id="about" class="row">
+    <div class="offset1 span12">
+    	{% if handle %}
+
+    	<h2>Your details&hellip;</h2>
+
+		<p>Your handle is <em>{{ handle }}</em>.</p>
+
+		<p>Emails sent to <em><a href="mailto:{{ handle }}@megachunt.appspotmail.com">{{ handle }}@megachunt.appspotmail.com</a></em> will automatically update your Chatter status, so <strong>keep it a secret</strong>!</p>
+
+		{% else %}
+
+		<h2>First of all&hellip;</h2>
+
+		<a class="btn large" href="/authenticate">Connect with Chatter</a>
+
+		{% endif %}
+
+    </div>
+</section>
+
+
 {% endblock %}
