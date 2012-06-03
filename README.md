@@ -4,7 +4,7 @@ Chatter for the masses!
 
 ## Background
 
-Fed up with having a feeble phone, and no compatible [Chatter](http://www.chatter.com/) client from which to update the rest of the team, I set about creating Mega Chunt, a platform with a single purpose -- to create more accessible methods of chunting for the masses!
+Fed up with having a feeble phone, and no compatible [Chatter](http://www.chatter.com/) client from which to update the rest of the team, I set about creating [Mega Chunt](https://megachunt.appspot.com/), a platform with a single purpose -- to create more accessible methods of chunting for the masses!
 
 ## What is this '_chunting_' you speak of?
 
@@ -22,7 +22,7 @@ Anyone with a [Chatter](http://www.chatter.com/) account, and a Google account.
 
 ## How do I start?
 
-First off, [connect with your Chatter account](http://megachunt.appspot.com/authenticate).
+First off, [connect with your Chatter account](https://megachunt.appspot.com/authenticate).
 
 Then you'll be granted a magical email address, __keep this email address a secret__.
 
@@ -36,5 +36,5 @@ Lastly, this is a bit of a hack, but you can also chunt through SMS if you like.
 
 Get in touch, and I'll do my best to answer! :)
 
-Email steve[at]nixonmcinnes.co.uk.
-Tweet @[steveWINton](http://twitter.com/steveWINton)
+* Email steve[at]nixonmcinnes.co.uk.
+* Tweet @[steveWINton](http://twitter.com/steveWINton)
