@@ -1,7 +1,10 @@
 import logging
 
+from email.utils import parseaddr
+
 from google.appengine.api import xmpp
 from google.appengine.ext import webapp
+from google.appengine.ext.webapp.mail_handlers import InboundMailHandler 
 
 from django.utils.html import strip_tags
 
@@ -9,6 +12,40 @@ from chatter import Chatter, ChatterAuth
 
 import settings
 from models import *
+
+class IncomingMailHandler(InboundMailHandler):
+    """
+    Handles all incoming mail.
+    """
+    def receive(self, message):
+        # TODO: Support multiple recipients
+        # Extract the recipient details from message.to
+        recipient_label, recipient_addr = parseaddr(message.to)
+
+        # Extract the 'chunt' from the first plain text body
+        plaintext_bodies = [body.decode() for content_type, body in message.bodies("text/plain")]
+        chunt = plaintext_bodies[0]
+        
+        # Log the sender and message body...
+        logging.info("Received message from %s to %s: %s" % (message.sender, message.to, chunt))
+        
+        # Get the handle
+        handle = recipient_addr.split("@")[0]
+        
+        # Get the user
+        user = EmailHandle.get_user_from_handle(handle)
+        
+        # Chunt!
+        logging.info("Chunting from %s: %s" % (user, chunt))
+        auth = ChatterAuth(settings.CHATTER_CONSUMER_KEY, settings.CHATTER_CONSUMER_SECRET)
+        chatter = Chatter(auth=auth, instance_url=user.instance_url, access_token=user.access_token, 
+                          refresh_token=user.refresh_token, 
+                          access_token_refreshed_callback=user.update_access_token)
+        chatter.feeds.news.me.feed_items.post(text=chunt)
+
+        # TODO: Save the Chunt
+
+emailapp = webapp.WSGIApplication([IncomingMailHandler.mapping()], debug=True)
 
 class IncomingXMPPHandler(webapp.RequestHandler):
     def post(self):
@@ -45,6 +82,9 @@ class IncomingXMPPHandler(webapp.RequestHandler):
 
         if "id" in chunt:
             # Success!
+            # TODO: Save the Chunt
+
+            # Send a response
             chunt_url = user.instance_url.rstrip("/") + "/" + chunt["id"]
             logging.info("Chunt url: " + chunt_url)
             message.reply(
@@ -57,6 +97,6 @@ class IncomingXMPPHandler(webapp.RequestHandler):
             # Something went wrong?
             message.reply("OH NOES :(")
 
-app = webapp.WSGIApplication([('/_ah/xmpp/message/chat/', IncomingXMPPHandler)],
-                             debug=True)
+xmppapp = webapp.WSGIApplication([('/_ah/xmpp/message/chat/', IncomingXMPPHandler)],
+                                 debug=True)
 
